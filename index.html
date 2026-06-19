@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Product Analytics Experimentation Lab</title>
+  <style>
+    :root { --ink:#17202a; --muted:#5d6978; --line:#d8dee6; --soft:#f7f9fc; --accent:#7c3aed; }
+    * { box-sizing:border-box; }
+    body { margin:0; font:16px/1.45 system-ui,-apple-system,Segoe UI,sans-serif; color:var(--ink); background:white; }
+    main { max-width:980px; margin:auto; padding:42px 22px 56px; }
+    header { border-bottom:1px solid var(--line); padding-bottom:22px; margin-bottom:26px; }
+    h1 { margin:0 0 8px; font-size:clamp(30px,5vw,44px); line-height:1.05; }
+    h2 { font-size:18px; margin:28px 0 12px; }
+    p { color:var(--muted); max-width:780px; margin:0 0 12px; }
+    a { color:var(--accent); text-decoration:none; font-weight:700; }
+    .button { display:inline-block; border:1px solid var(--line); border-radius:6px; padding:8px 12px; background:var(--soft); color:var(--ink); margin-top:16px; }
+    .grid { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin:20px 0; }
+    .metric, .panel { border:1px solid var(--line); border-radius:8px; padding:14px; background:white; }
+    .metric strong { display:block; font-size:24px; }
+    .metric span { color:var(--muted); font-size:13px; }
+    .bar { height:12px; border-radius:999px; background:#ece7ff; overflow:hidden; margin:8px 0 16px; }
+    .bar span { display:block; height:100%; background:var(--accent); }
+    @media (max-width:760px){ .grid{grid-template-columns:repeat(2,1fr);} }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Product Analytics Experimentation Lab</h1>
+    <p>SQLite, SQL, and Python project for funnel analysis, cohort retention, and two-proportion experiment readouts.</p>
+    <a class="button" href="https://github.com/Zinga18018/product-analytics-experimentation-lab">GitHub Repository</a>
+  </header>
+  <section class="grid">
+    <div class="metric"><strong>5,000</strong><span>users</span></div>
+    <div class="metric"><strong>22,287</strong><span>sessions</span></div>
+    <div class="metric"><strong>64,908</strong><span>events</span></div>
+    <div class="metric"><strong>9.7e-05</strong><span>p-value</span></div>
+  </section>
+  <section class="panel">
+    <h2>Experiment readout</h2>
+    <p>Control purchase rate: 52.94%</p>
+    <div class="bar"><span style="width:52.94%"></span></div>
+    <p>Treatment purchase rate: 58.42%</p>
+    <div class="bar"><span style="width:58.42%"></span></div>
+    <p>Observed lift: 5.48 percentage points. The dashboard also reports funnel conversion, acquisition-channel performance, and 7/14/30-day cohort retention.</p>
+  </section>
+</main>
+</body>
+</html>
+
