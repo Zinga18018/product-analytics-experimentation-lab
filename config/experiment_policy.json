@@ -1,0 +1,15 @@
+{
+  "experiment_name": "onboarding_redesign",
+  "as_of": "2026-03-02",
+  "conversion_days": 7,
+  "retention_start_day": 1,
+  "retention_end_day": 7,
+  "revenue_days": 7,
+  "expected_treatment_share": 0.5,
+  "alpha": 0.05,
+  "srm_alpha": 0.001,
+  "min_users_per_arm": 100,
+  "min_conversion_lift": 0.0,
+  "retention_loss_tolerance": 0.02,
+  "revenue_loss_tolerance": 1.0
+}

@@ -1,0 +1,86 @@
+{
+  "policy": {
+    "experiment_name": "onboarding_redesign",
+    "as_of": "2026-03-02",
+    "conversion_days": 7,
+    "retention_start_day": 1,
+    "retention_end_day": 7,
+    "revenue_days": 7,
+    "expected_treatment_share": 0.5,
+    "alpha": 0.05,
+    "srm_alpha": 0.001,
+    "min_users_per_arm": 100,
+    "min_conversion_lift": 0.0,
+    "retention_loss_tolerance": 0.02,
+    "revenue_loss_tolerance": 1.0
+  },
+  "confidence_level": 0.95,
+  "eligible_users": 4413,
+  "excluded_immature_users": 587,
+  "conversion": {
+    "control_users": 2179,
+    "treatment_users": 2234,
+    "control_successes": 384,
+    "treatment_successes": 474,
+    "control_rate": 0.17622762735199632,
+    "treatment_rate": 0.21217547000895254,
+    "absolute_lift": 0.03594784265695622,
+    "ci_low": 0.012601808553628677,
+    "ci_high": 0.05923037604448141,
+    "p_value": 0.0025545812528991597,
+    "z_score": 3.0168002049584466,
+    "normal_test_eligible": true,
+    "control_purchases": 384,
+    "treatment_purchases": 474,
+    "relative_lift_percent": 20.39852842435094,
+    "statistically_significant_05": true
+  },
+  "retention": {
+    "control_users": 2179,
+    "treatment_users": 2234,
+    "control_successes": 1335,
+    "treatment_successes": 1355,
+    "control_rate": 0.6126663607159247,
+    "treatment_rate": 0.6065353625783348,
+    "absolute_lift": -0.0061309981375898825,
+    "ci_low": -0.03488393347001069,
+    "ci_high": 0.02264630516875809,
+    "p_value": 0.6763878763494109,
+    "z_score": -0.4173972358727219,
+    "normal_test_eligible": true
+  },
+  "revenue": {
+    "control_mean": 20.921693437356584,
+    "treatment_mean": 25.309189794091317,
+    "difference": 4.387496356734733,
+    "ci_low": 1.0813908245064283,
+    "ci_high": 7.6936018889630375,
+    "method": "Welch t interval on revenue per assigned user"
+  },
+  "sample_ratio": {
+    "enrolled": {
+      "control_users": 2482,
+      "treatment_users": 2518,
+      "p_value": 0.6206223447534303,
+      "passed": true
+    },
+    "eligible": {
+      "control_users": 2179,
+      "treatment_users": 2234,
+      "p_value": 0.41628946701209024,
+      "passed": true
+    }
+  },
+  "checks": {
+    "minimum_sample": true,
+    "sample_ratio": true,
+    "conversion": true,
+    "retention": false,
+    "revenue": true
+  },
+  "blockers": [
+    "Retention noninferiority is not established within the declared loss tolerance."
+  ],
+  "decision": "hold",
+  "recommendation": "Hold rollout. Retention noninferiority is not established within the declared loss tolerance."
+}

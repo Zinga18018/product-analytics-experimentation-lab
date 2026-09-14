@@ -1,70 +1,48 @@
--- Product Analytics Experimentation Lab
--- Interview-style SQL queries for product data science and analytics roles.
+-- Interview examples. Bind :experiment_name, :as_of, :horizon_days,
+-- :conversion_days from config/experiment_policy.json.
+-- The complete validated decision path is src/analytics.py.
 
--- 1. Funnel by experiment variant
-WITH user_events AS (
-    SELECT
-        ea.variant,
-        ea.user_id,
-        MAX(CASE WHEN e.event_name = 'view_landing' THEN 1 ELSE 0 END) AS viewed_landing,
-        MAX(CASE WHEN e.event_name = 'view_product' THEN 1 ELSE 0 END) AS viewed_product,
-        MAX(CASE WHEN e.event_name = 'start_checkout' THEN 1 ELSE 0 END) AS started_checkout,
-        MAX(CASE WHEN e.event_name = 'purchase' THEN 1 ELSE 0 END) AS purchased
-    FROM experiment_assignments ea
-    LEFT JOIN events e
-        ON ea.user_id = e.user_id
-    GROUP BY ea.variant, ea.user_id
+-- 1. Conversion denominator includes every fully observed assigned user.
+-- The purchase window is [assignment, assignment + conversion_days).
+WITH eligible AS (
+  SELECT user_id, variant, assigned_at FROM experiment_assignments
+  WHERE experiment_name = :experiment_name
+    AND JULIANDAY(assigned_at) + :horizon_days <= JULIANDAY(:as_of)
+), user_outcomes AS (
+  SELECT a.user_id, a.variant,
+    MAX(CASE WHEN e.event_name = 'purchase' THEN 1 ELSE 0 END) AS purchased
+  FROM eligible a LEFT JOIN events e ON e.user_id = a.user_id
+    AND JULIANDAY(e.event_time) >= JULIANDAY(a.assigned_at)
+    AND JULIANDAY(e.event_time) < JULIANDAY(a.assigned_at) + :conversion_days
+  GROUP BY a.user_id, a.variant
 )
-SELECT
-    variant,
-    COUNT(*) AS assigned_users,
-    SUM(viewed_landing) AS viewed_landing_users,
-    SUM(viewed_product) AS viewed_product_users,
-    SUM(started_checkout) AS checkout_users,
-    SUM(purchased) AS purchase_users,
-    ROUND(1.0 * SUM(purchased) / COUNT(*), 4) AS purchase_rate
-FROM user_events
-GROUP BY variant;
+SELECT variant, COUNT(*) AS eligible_assigned_users,
+  SUM(purchased) AS purchasers, 1.0 * SUM(purchased) / COUNT(*) AS purchase_rate
+FROM user_outcomes GROUP BY variant;
 
--- 2. Acquisition-channel revenue per user
-SELECT
-    u.acquisition_channel,
-    COUNT(DISTINCT u.user_id) AS users,
-    COUNT(DISTINCT CASE WHEN e.event_name = 'purchase' THEN u.user_id END) AS purchasers,
-    ROUND(SUM(e.revenue), 2) AS revenue,
-    ROUND(SUM(e.revenue) / COUNT(DISTINCT u.user_id), 2) AS revenue_per_user
-FROM users u
-LEFT JOIN events e
-    ON u.user_id = e.user_id
-GROUP BY u.acquisition_channel
-ORDER BY revenue_per_user DESC;
+-- 2. Descriptive all-observed-time channel revenue, not causal experiment evidence.
+SELECT u.acquisition_channel, COUNT(DISTINCT u.user_id) AS users,
+  COUNT(DISTINCT CASE WHEN e.event_name = 'purchase' THEN u.user_id END) AS purchasers,
+  COALESCE(SUM(CASE WHEN e.event_name = 'purchase' THEN e.revenue ELSE 0 END), 0) AS revenue,
+  COALESCE(SUM(CASE WHEN e.event_name = 'purchase' THEN e.revenue ELSE 0 END), 0)
+    / COUNT(DISTINCT u.user_id) AS revenue_per_user
+FROM users u LEFT JOIN events e ON u.user_id = e.user_id
+GROUP BY u.acquisition_channel ORDER BY revenue_per_user DESC;
 
--- 3. Weekly cohort retention
-WITH first_seen AS (
-    SELECT
-        user_id,
-        DATE(signup_date) AS signup_date,
-        STRFTIME('%Y-%W', signup_date) AS signup_week
-    FROM users
-),
-activity AS (
-    SELECT DISTINCT
-        fs.user_id,
-        fs.signup_week,
-        CAST(JULIANDAY(s.session_date) - JULIANDAY(fs.signup_date) AS INTEGER) AS days_after_signup
-    FROM first_seen fs
-    JOIN sessions s
-        ON fs.user_id = s.user_id
+-- 3. Signup-cohort retention days 1-7. Includes inactive users; mature denominator.
+-- Use end-exclusive +15 for days 8-14 and +31 for days 15-30.
+WITH user_windows AS (
+  SELECT u.user_id, STRFTIME('%Y-%W', u.signup_date) AS signup_week,
+    JULIANDAY(u.signup_date) + 8 <= JULIANDAY(:as_of) AS eligible,
+    MAX(CASE WHEN JULIANDAY(s.session_started_at) >= JULIANDAY(u.signup_date) + 1
+      AND JULIANDAY(s.session_started_at) < JULIANDAY(u.signup_date) + 8
+      THEN 1 ELSE 0 END) AS retained
+  FROM users u LEFT JOIN sessions s ON u.user_id = s.user_id
+    AND JULIANDAY(s.session_started_at) < JULIANDAY(:as_of)
+  WHERE JULIANDAY(u.signup_date) < JULIANDAY(:as_of)
+  GROUP BY u.user_id, u.signup_date
 )
-SELECT
-    signup_week,
-    COUNT(DISTINCT user_id) AS cohort_users,
-    ROUND(1.0 * COUNT(DISTINCT CASE WHEN days_after_signup BETWEEN 1 AND 7 THEN user_id END)
-          / COUNT(DISTINCT user_id), 4) AS retention_7d,
-    ROUND(1.0 * COUNT(DISTINCT CASE WHEN days_after_signup BETWEEN 8 AND 14 THEN user_id END)
-          / COUNT(DISTINCT user_id), 4) AS retention_14d,
-    ROUND(1.0 * COUNT(DISTINCT CASE WHEN days_after_signup BETWEEN 15 AND 30 THEN user_id END)
-          / COUNT(DISTINCT user_id), 4) AS retention_30d
-FROM activity
-GROUP BY signup_week
-ORDER BY signup_week;
+SELECT signup_week, COUNT(*) AS cohort_users,
+  SUM(eligible) AS eligible_7d_users, SUM(retained * eligible) AS retained_7d_users,
+  1.0 * SUM(retained * eligible) / NULLIF(SUM(eligible), 0) AS retention_7d
+FROM user_windows GROUP BY signup_week ORDER BY signup_week;

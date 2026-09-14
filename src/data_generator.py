@@ -150,9 +150,11 @@ def _create_indexes(conn: sqlite3.Connection) -> None:
     conn.executescript(
         """
         CREATE INDEX idx_users_signup_date ON users(signup_date);
+        CREATE INDEX idx_users_id ON users(user_id);
         CREATE INDEX idx_sessions_user_date ON sessions(user_id, session_date);
         CREATE INDEX idx_events_user_event ON events(user_id, event_name);
         CREATE INDEX idx_events_session ON events(session_id);
         CREATE INDEX idx_assignments_variant ON experiment_assignments(variant);
+        CREATE INDEX idx_assignments_experiment_date ON experiment_assignments(experiment_name, assigned_at);
         """
     )
