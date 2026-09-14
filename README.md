@@ -1,5 +1,7 @@
 # Product Analytics Experimentation Lab
 
+[See the workflow flowchart and code walkthrough](WORKFLOW.md)
+
 End-to-end product analytics project for data analyst, product data science, and applied ML internship roles.
 
 ## What This Project Shows
